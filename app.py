@@ -12,13 +12,10 @@ st.set_page_config(page_title="专属奖励小助手", page_icon="🎁", layout=
 def get_global_state():
     return {
         'draw_count': 0,
-        'small_prizes': ["王者荣耀精美皮肤任选一个 👗", "无条件上号陪打三局(我包打辅助) 🛡️",
-                         "游戏连败免背锅特权一次 🙅‍♀️", "立刻马上外卖投喂一杯奶茶 🧋", "随机掉落的惊喜宵夜盲盒 🍢",
-                         "连麦同步看一部你想看的电影 🍿", "获得一次真心话强制回答权 🤫",
-                         "24小时电子宠物随叫随到体验卡 🐶"],
+        'small_prizes': ["无条件上号陪打三局(全听你的) 🛡️", "立刻马上外卖投喂一杯奶茶 🧋", "随机掉落的惊喜外卖盲盒 🍢",
+                         "洗头一次", "肩颈按摩一次"],
         'big_prizes': ["周末全套肩颈头部马杀鸡 💆‍♀️", "周末约会行程全包(我做攻略买单) 🗺️", "清空购物车(限额500) 🛒",
-                       "报销一件高颜值设计好物 🎁", "周末两天家务点餐全包特权 🧹", "免生气及无条件认错金牌 🥇",
-                       "周末见面的神秘实体盲盒 💝"],
+                       "报销一件高颜值设计好物 🎁", "周末见面的神秘实体盲盒 💝"],
         'pity_threshold': 15,
         'task_status': "none",
         'current_task': ""
@@ -30,24 +27,24 @@ db = get_global_state()
 
 # --- 3. 侧边栏：角色切换与密码验证 ---
 st.sidebar.title("🔐 身份切换")
-role = st.sidebar.radio("请选择你的身份：", ["我是女朋友 👑", "我是男朋友 👨‍💻"])
+role = st.sidebar.radio("请选择你的身份：", ["我是陈雨桐 👑", "我是官瑞安 👨‍💻"])
 
 # 密码验证逻辑
 is_admin = False
-if role == "我是男朋友 👨‍💻":
+if role == "我是官瑞安 👨‍💻":
     # 在这里修改你的专属暗号
     admin_password = st.sidebar.text_input("请输入专属暗号解锁后台：", type="password")
     if admin_password == "520":
         is_admin = True
-        st.sidebar.success("暗号正确，欢迎老板！")
+        st.sidebar.success("暗号正确，欢迎瑞安！")
     elif admin_password != "":
         st.sidebar.error("暗号不对哦，你是不是想偷看后台！")
 
 # ==========================================
-# --- 4. 视图 A：女朋友界面 (用户端) ---
+# --- 4. 视图 A：陈雨桐界面 (用户端) ---
 # ==========================================
-if role == "我是陈雨桐":
-    st.title("💖 宝宝的专属奖励系统")
+if role == "我是陈雨桐 👑":
+    st.title("💖 雨桐的专属奖励系统")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -59,14 +56,14 @@ if role == "我是陈雨桐":
     st.divider()
 
     # 点击刷新按钮可以拉取最新状态
-    if st.button("🔄 刷新页面 (看看男朋友批了没)"):
+    if st.button("🔄 刷新页面 (看看官瑞安批了没)"):
         st.rerun()
 
     if db['task_status'] == "none":
         st.subheader("📝 提交今日打卡/进度")
-        task_desc = st.text_input("今天干了点啥？(比如：今天按时吃早饭啦！)")
+        task_desc = st.text_input("今天干了点啥？(比如：OPPO视觉图排版搞定啦！)")
 
-        if st.button("🚀 提交给男朋友审核"):
+        if st.button("🚀 提交给官瑞安审核"):
             if task_desc:
                 db['current_task'] = task_desc
                 db['task_status'] = "pending"
@@ -78,7 +75,7 @@ if role == "我是陈雨桐":
 
     elif db['task_status'] == "pending":
         st.info(f"⏳ 当前进度正在审核中：\n\n**{db['current_task']}**")
-        st.write("请耐心等待男朋友批准...")
+        st.write("请耐心等待官瑞安批准...")
 
     elif db['task_status'] == "approved":
         st.success("🎉 审核通过！你获得了一次抽奖机会！")
@@ -91,33 +88,33 @@ if role == "我是陈雨桐":
                 if db['draw_count'] % db['pity_threshold'] == 0:
                     prize = random.choice(db['big_prizes'])
                     st.balloons()
-                    st.error(f"🌟 触发 SSR 保底大奖！恭喜宝宝获得：\n\n### 【{prize}】")
+                    st.error(f"🌟 触发 SSR 保底大奖！恭喜雨桐获得：\n\n### 【{prize}】")
                 else:
                     prize = random.choice(db['small_prizes'])
-                    st.success(f"✨ 抽奖成功！恭喜宝宝获得：\n\n### 【{prize}】")
+                    st.success(f"✨ 抽奖成功！恭喜雨桐获得：\n\n### 【{prize}】")
 
                 db['task_status'] = "none"
                 db['current_task'] = ""
 
 
 # ==========================================
-# --- 5. 视图 B：男朋友界面 (管理端 - 需要密码) ---
+# --- 5. 视图 B：官瑞安界面 (管理端 - 需要密码) ---
 # ==========================================
-elif role == "我是官瑞安":
+elif role == "我是官瑞安 👨‍💻":
     if not is_admin:
         st.warning("👆 请在左侧输入专属暗号解锁管理后台！")
     else:
-        st.title("⚙️ 奖励系统后台管理")
+        st.title("⚙️ 官瑞安的后台管理")
 
         # 刷新状态
-        if st.button("🔄 刷新页面 (看看有没有新提交)"):
+        if st.button("🔄 刷新页面 (看看雨桐有没有新提交)"):
             st.rerun()
 
         # 审核中心
         st.header("📋 审核中心")
         if db['task_status'] == "pending":
-            st.warning("⚠️ 收到新的进度提交！")
-            st.write(f"**宝宝提交的描述：** {db['current_task']}")
+            st.warning("⚠️ 收到雨桐新的进度提交！")
+            st.write(f"**雨桐提交的描述：** {db['current_task']}")
 
             col1, col2 = st.columns(2)
             with col1:
