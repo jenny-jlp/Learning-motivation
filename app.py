@@ -8,23 +8,21 @@ import os
 st.set_page_config(page_title="专属奖励系统-持久化版", page_icon="🎁", layout="centered")
 DATA_FILE = "data.json"
 
-# 默认初始数据
+# 默认初始数据 (已根据你的最新设置更新)
 DEFAULT_DATA = {
     'draw_count': 0,
-    'small_prizes': ["无条件上号陪打三局(全听你的) 🛡️", "立刻马上外卖投喂一杯奶茶 🧋", "随机掉落的惊喜外卖盲盒 🍢",
-                     "洗头一次", "肩颈按摩一次"],
-    'big_prizes': ["周末全套肩颈头部马杀鸡 💆‍♀️", "周末约会行程全包(我做攻略买单) 🗺️", "清空购物车(限额500) 🛒",
-                   "报销一件高颜值设计好物 🎁", "周末见面的神秘实体盲盒 💝"],
-    'pity_threshold': 15,
+    'small_prizes': ["无条件上号陪打三局(全听你的)", "立刻马上外卖投喂一杯奶茶", "随机掉落的惊喜外卖盲盒", "洗头一次",
+                     "肩颈按摩一次", "一本想看的书", "一袋爱吃的零食", "一个小手办"],
+    'big_prizes': ["周末全套肩颈头部马杀鸡", "清空购物车(限额500)", "奶茶自由一周", "海鲜自助餐"],
+    'pity_threshold': 10,
     'task_status': "none",
     'current_task': "",
-    'history': []  # 用于保存所有提交的历史记录
+    'history': []
 }
 
 
 # --- 2. 持久化核心函数 ---
 def load_data():
-    """从磁盘加载数据"""
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, 'r', encoding='utf-8') as f:
@@ -35,14 +33,10 @@ def load_data():
 
 
 def save_data(data):
-    """保存数据到磁盘"""
-    # 注意：图片二进制数据不能直接存入 JSON，这里我们只存文本和次数
-    # 如果需要存图片，建议使用数据库，目前的 JSON 仅支持文字持久化
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
-# 使用 cache_resource 保持单次运行时的连接，但在读写时手动调用 save/load
 @st.cache_resource
 def get_db():
     return load_data()
@@ -59,7 +53,7 @@ if role == "我是官瑞安 👨‍💻":
     admin_password = st.sidebar.text_input("请输入专属暗号：", type="password")
     if admin_password == "520":
         is_admin = True
-        st.sidebar.success("欢迎回来，瑞安")
+        st.sidebar.success("欢迎回来，瑞安！")
 
 # ==========================================
 # --- 4. 视图 A：陈雨桐界面 (用户端) ---
@@ -83,10 +77,12 @@ if role == "我是陈雨桐 👑":
             if task_desc:
                 db['current_task'] = task_desc
                 db['task_status'] = "pending"
-                save_data(db)  # 立即保存
+                save_data(db)
                 st.success("已提交，等待瑞安审核中...")
                 time.sleep(1)
                 st.rerun()
+            else:
+                st.warning("提示：随便写点什么才能提交哦！")
 
     elif db['task_status'] == "pending":
         st.info(f"⏳ 审核中：{db['current_task']}")
@@ -101,7 +97,6 @@ if role == "我是陈雨桐 👑":
             pool = db['big_prizes'] if is_pity else db['small_prizes']
             prize = random.choice(pool)
 
-            # 记录到历史
             db['history'].append({
                 "time": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "task": db['current_task'],
@@ -112,12 +107,12 @@ if role == "我是陈雨桐 👑":
             st.session_state.last_prize = prize
             db['task_status'] = "none"
             db['current_task'] = ""
-            save_data(db)  # 立即保存
+            save_data(db)
             st.rerun()
 
     if 'last_prize' in st.session_state:
         st.balloons()
-        st.success(f"恭喜获得：{st.session_state.last_prize}")
+        st.success(f"恭喜宝宝获得：【{st.session_state.last_prize}】")
         del st.session_state.last_prize
 
 # ==========================================
@@ -160,19 +155,32 @@ elif role == "我是官瑞安 👨‍💻":
 
         if st.button("💾 保存奖池设置"):
             save_data(db)
-            st.success("设置已永久保存至磁盘！")
+            st.success("设置已永久保存！")
+
+        st.divider()
+
+        # 新增：手动修正数据区
+        st.header("🎛️ 数据手动修正")
+        st.write("如果发现抽奖次数不对，可以在这里手动调整进度。")
+        new_draw_count = st.number_input("当前累计抽奖次数", min_value=0, max_value=1000, value=db['draw_count'],
+                                         step=1)
+        if st.button("💾 更新抽奖次数"):
+            db['draw_count'] = new_draw_count
+            save_data(db)
+            st.success(f"已成功将抽奖次数修改为 {new_draw_count} 次！")
+            time.sleep(1)
+            st.rerun()
 
         st.divider()
 
         # 历史记录区
         st.header("🕒 历史提交记录")
         if db['history']:
-            for h in reversed(db['history']):  # 最近的在前
+            for h in reversed(db['history']):
                 st.text(f"[{h['time']}] 任务：{h['task']} -> 抽中：{h['prize']}")
         else:
             st.write("尚无历史记录")
 
-        # 重置按钮
-        if st.button("⚠️ 重置所有数据（谨慎！）"):
+        if st.button("⚠️ 终极重置 (清空所有数据与历史)"):
             save_data(DEFAULT_DATA)
             st.rerun()
