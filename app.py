@@ -8,7 +8,7 @@ import os
 st.set_page_config(page_title="专属奖励系统-持久化版", page_icon="🎁", layout="centered")
 DATA_FILE = "data.json"
 
-# 默认初始数据 (已根据你的最新设置更新)
+# 默认初始数据
 DEFAULT_DATA = {
     'draw_count': 0,
     'small_prizes': ["无条件上号陪打三局(全听你的)", "立刻马上外卖投喂一杯奶茶", "随机掉落的惊喜外卖盲盒", "洗头一次",
@@ -124,7 +124,6 @@ elif role == "我是官瑞安 👨‍💻":
     else:
         st.title("⚙️ 瑞安的管理后台")
 
-        # 审核区
         st.header("📋 待处理审核")
         if db['task_status'] == "pending":
             st.write(f"**雨桐提交：** {db['current_task']}")
@@ -142,26 +141,24 @@ elif role == "我是官瑞安 👨‍💻":
 
         st.divider()
 
-        # 奖池设置区
         st.header("🛠️ 奖池永久修改")
         st.write("在这里修改后点击“保存设置”，下次打开网页依然有效。")
         db['pity_threshold'] = st.number_input("保底次数", 1, 50, db['pity_threshold'])
 
+        # 核心修复点：使用 replace("，", ",") 把所有中文逗号替换成英文逗号再进行切割
         s_prizes = st.text_area("日常奖池(逗号分隔)", ",".join(db['small_prizes']))
-        db['small_prizes'] = [x.strip() for x in s_prizes.split(",") if x.strip()]
+        db['small_prizes'] = [x.strip() for x in s_prizes.replace("，", ",").split(",") if x.strip()]
 
         b_prizes = st.text_area("大奖池(逗号分隔)", ",".join(db['big_prizes']))
-        db['big_prizes'] = [x.strip() for x in b_prizes.split(",") if x.strip()]
+        db['big_prizes'] = [x.strip() for x in b_prizes.replace("，", ",").split(",") if x.strip()]
 
         if st.button("💾 保存奖池设置"):
             save_data(db)
-            st.success("设置已永久保存！")
+            st.success("设置已永久保存！即使输入中文逗号也不会出错啦！")
 
         st.divider()
 
-        # 新增：手动修正数据区
         st.header("🎛️ 数据手动修正")
-        st.write("如果发现抽奖次数不对，可以在这里手动调整进度。")
         new_draw_count = st.number_input("当前累计抽奖次数", min_value=0, max_value=1000, value=db['draw_count'],
                                          step=1)
         if st.button("💾 更新抽奖次数"):
@@ -173,7 +170,6 @@ elif role == "我是官瑞安 👨‍💻":
 
         st.divider()
 
-        # 历史记录区
         st.header("🕒 历史提交记录")
         if db['history']:
             for h in reversed(db['history']):
